@@ -12,6 +12,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+//TODO
+// init初始化
+// viper配置文件
+// log 日志
+// 引用mysql
+
 func main() {
 	// 指标项
 	// 指标类型/触发时间 采集api的时候触发
