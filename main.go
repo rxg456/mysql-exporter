@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"mysql-exporter/collectors"
+	"mysql-exporter/handler"
 	"net/http"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -21,6 +22,11 @@ func main() {
 	dsn := "root:kubernetes@2020@tcp(121.36.50.10:3306)/mysql"
 	mysqlAddr := "121.36.50.10:3306"
 	addr := ":9002"
+	user, password := "admin", "$2a$05$pJJshN/.PRj2a59KkfWFXeP3a.1L3Iq9VAj4Ny/1hxVexWAVg2Tvq"
+
+	// txt, _ := bcrypt.GenerateFromPassword([]byte("123abc"), 5)
+	// fmt.Println(string(txt)) // $2a$05$pJJshN/.PRj2a59KkfWFXeP3a.1L3Iq9VAj4Ny/1hxVexWAVg2Tvq
+
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		log.Fatal(err)
@@ -45,7 +51,11 @@ func main() {
 	prometheus.MustRegister(collectors.NewQpsCollector(db))
 
 	// 暴露指标
-	http.Handle("/metrics", promhttp.Handler())
+	http.Handle("/metrics", handler.Auth(
+		promhttp.Handler(),
+		handler.AuthSecrets{
+			user: password},
+	))
 	http.ListenAndServe(addr, nil)
 
 }
