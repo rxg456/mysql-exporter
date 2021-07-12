@@ -2,19 +2,19 @@ package collectors
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
 )
 
 type SlowQueriesCollector struct {
-	db   *sql.DB
+	mysqlCollector
 	desc *prometheus.Desc
 }
 
 func NewSlowQueriesCollector(db *sql.DB) *SlowQueriesCollector {
 	return &SlowQueriesCollector{
-		db: db,
+		mysqlCollector: mysqlCollector{db},
 		desc: prometheus.NewDesc(
 			"mysql_global_status_slow_queries",
 			"Mysql global status slow queries",
@@ -29,12 +29,12 @@ func (c *SlowQueriesCollector) Describe(descs chan<- *prometheus.Desc) {
 }
 
 func (c *SlowQueriesCollector) Collect(metrics chan<- prometheus.Metric) {
-	var (
-		name  string
-		count float64
-	)
-	c.db.QueryRow("show global status where variable_name=?", "slow_queries").Scan(&name, &count)
-	metrics <- prometheus.MustNewConstMetric(c.desc, prometheus.CounterValue, count)
+	sample := c.status("slow_queries")
+	logrus.WithFields(logrus.Fields{
+		"metric": "slow_queries",
+		"sample": sample,
+	}).Debug("queries slow")
+	metrics <- prometheus.MustNewConstMetric(c.desc, prometheus.CounterValue, sample)
 }
 
 type QpsCollector struct {
@@ -59,13 +59,10 @@ func (c *QpsCollector) Describe(descs chan<- *prometheus.Desc) {
 }
 
 func (c *QpsCollector) Collect(metrics chan<- prometheus.Metric) {
-	var (
-		name  string
-		count float64
-	)
-	err := c.db.QueryRow("show global status where variable_name=?", "queries").Scan(&name, &count)
-	if err != nil {
-		fmt.Println(err)
-	}
-	metrics <- prometheus.MustNewConstMetric(c.desc, prometheus.CounterValue, count)
+	sample := c.status("queries")
+	logrus.WithFields(logrus.Fields{
+		"metric": "queries",
+		"sample": sample,
+	}).Debug("queries metric")
+	metrics <- prometheus.MustNewConstMetric(c.desc, prometheus.CounterValue, sample)
 }

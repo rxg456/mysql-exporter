@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
 )
 
 type ConnectionCollector struct {
@@ -37,12 +38,20 @@ func (c *ConnectionCollector) Describe(descs chan<- *prometheus.Desc) {
 
 func (c *ConnectionCollector) Collect(metrics chan<- prometheus.Metric) {
 	maxConnections := c.variables("max_connections")
+	logrus.WithFields(logrus.Fields{
+		"metric": "max_connections",
+		"sample": maxConnections,
+	}).Debug("command metric")
 	metrics <- prometheus.MustNewConstMetric(
 		c.maxConnectionDesc,
 		prometheus.CounterValue,
 		maxConnections,
 	)
 	threadsConnected := c.status("threads_connected")
+	logrus.WithFields(logrus.Fields{
+		"metric": "max_connections",
+		"sample": threadsConnected,
+	}).Debug("command metric")
 	metrics <- prometheus.MustNewConstMetric(
 		c.threadsConnectedDesc,
 		prometheus.CounterValue,
